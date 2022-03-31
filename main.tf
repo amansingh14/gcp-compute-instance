@@ -5,30 +5,51 @@ resource "random_string" "bucket" {
   upper    = false
 }
 resource "google_compute_disk" "windows_boot_disk" {
+  count   = 3
   project = local.project_name
-  name    = "Windows-server-ad"
-  image   = "windows-cloud/windows-2019"
+  name    = "Windows-server-ad-${count.index}"
+  image   = local.windows_image
   type    = "pd-ssd"
   zone    = ""
   size    = 100
 }
 
-resource "google_compute_disk" "addition_disks" {
+resource "google_compute_disk" "cloudfs-ps-disk" {
+  count   = 3
   project = local.project_name
-  name    = "metadata"
+  name    = "cloudfs-ps-disk-${count.index}"
+  image   = local.windows_image
   type    = "pd-ssd"
-  zone    = "us-central1"
+  zone    = ""
+  size    = 50
+}
+
+resource "google_compute_disk" "addition_cache_disks" {
+  count   = 2
+  project = local.project_name
+  name    = "cloudfs-cache-disk-${count.index}"
+  type    = "pd-ssd"
+  zone    = local.zone_id
   size    = 100
 }
 
+resource "google_compute_disk" "addition_metadata_disks" {
+  count   = 2
+  project = local.project_name
+  name    = "cloudfs-metadata-disk-${count.index}"
+  type    = "pd-ssd"
+  zone    = local.zone_id
+  size    = 100
+}
 resource "google_compute_instance" "windows-instance" {
+  count                     = 3
   project                   = local.project_name
   machine_type              = "n2-standard-4"
-  name                      = "Windows-server-AD"
+  name                      = "Windows-server-AD-${count.index}"
   zone                      = ""
   allow_stopping_for_update = true
   boot_disk {
-    source = google_compute_disk.windows_boot_disk.self_link
+    source = google_compute_disk.windows_boot_disk[count.index].self_link
   }
   network_interface {
     network            = "default"
@@ -36,25 +57,16 @@ resource "google_compute_instance" "windows-instance" {
   }
 }
 
-resource "google_compute_disk" "cloudfs_cache_disk" {
-  project = local.project_name
-  name    = "Windows-server-ad"
-  image   = "image_id"
-  type    = "pd-ssd"
-  zone    = ""
-  size    = 200
-}
-
 resource "google_compute_instance" "cloudfs-instance" {
+  count                     = 2
   project                   = local.project_name
   machine_type              = "n2-standard-4"
-  name                      = "Windows-server-AD"
+  name                      = "cloudfs-node-inst-${count.index}"
   zone                      = ""
   allow_stopping_for_update = true
   boot_disk {
-    initialize_params {
-      image = "debian-cloud/debian-9"
-    }
+    source = google_compute_disk.cloudfs-ps-disk[count.index].self_link
+
   }
   network_interface {
     network            = "default"
@@ -63,23 +75,25 @@ resource "google_compute_instance" "cloudfs-instance" {
 }
 
 resource "google_compute_attached_disk" "attach_metadata_disk" {
+  count    = 2
   project  = local.project_name
-  zone     = "us-central1"
-  disk     = google_compute_disk.addition_disks.name
-  instance = google_compute_instance.cloudfs-instance.name
+  zone     = local.zone_id
+  disk     = google_compute_disk.addition_cache_disks[count.index].name
+  instance = google_compute_instance.cloudfs-instance[count.index].name
 }
 
 resource "google_compute_attached_disk" "attach_cache_disk" {
+  count    = 2
   project  = local.project_name
-  zone     = "us-central1"
-  disk     = google_compute_disk.cloudfs_cache_disk.name
-  instance = google_compute_instance.cloudfs-instance.name
+  zone     = local.zone_id
+  disk     = google_compute_disk.addition_cache_disks[count.index].name
+  instance = google_compute_instance.cloudfs-instance[count.index].name
 }
 
 resource "google_storage_bucket" "cloudfs_bucket" {
   for_each = local.storage_buckets
   project  = local.project_name
-  location = "us-central1"
+  location = local.zone_id
   name     = "${local.project_name}-${each.value.type}-${random_string.bucket[each.key].result}"
 }
 

@@ -14,4 +14,6 @@ locals {
   },
 }
   project_name = "tryme2"
+  windows_image = "windows-cloud/windows-2019"
+  zone_id     = "us-central1-a"
 }
