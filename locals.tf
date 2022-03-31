@@ -13,7 +13,6 @@ locals {
     location = "us-central1"
   },
 }
-  project_name = "tryme2"
-  windows_image = "windows-cloud/windows-2019"
+  project_name = "dev-penzura-edge"
   zone_id     = "us-central1-a"
 }

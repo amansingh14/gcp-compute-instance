@@ -4,25 +4,6 @@ resource "random_string" "bucket" {
   special  = false
   upper    = false
 }
-resource "google_compute_disk" "windows_boot_disk" {
-  count   = 3
-  project = local.project_name
-  name    = "Windows-server-ad-${count.index}"
-  image   = local.windows_image
-  type    = "pd-ssd"
-  zone    = ""
-  size    = 100
-}
-
-resource "google_compute_disk" "cloudfs_ps_disk" {
-  count   = 3
-  project = local.project_name
-  name    = "cloudfs-ps-disk-${count.index}"
-  image   = local.windows_image
-  type    = "pd-ssd"
-  zone    = ""
-  size    = 50
-}
 
 resource "google_compute_disk" "addition_cache_disks" {
   count   = 2
@@ -30,7 +11,7 @@ resource "google_compute_disk" "addition_cache_disks" {
   name    = "cloudfs-cache-disk-${count.index}"
   type    = "pd-ssd"
   zone    = local.zone_id
-  size    = 100
+  size    = 200
 }
 
 resource "google_compute_disk" "addition_metadata_disks" {
@@ -49,7 +30,10 @@ resource "google_compute_instance" "windows_instance" {
   zone                      = ""
   allow_stopping_for_update = true
   boot_disk {
-    source = google_compute_disk.windows_boot_disk[count.index].self_link
+    initialize_params {
+      image = "projects/windows-cloud/global/images/windows-server-2019-dc-v20211216"
+      size  = 100
+    }
   }
   network_interface {
     network            = "default"
@@ -65,7 +49,9 @@ resource "google_compute_instance" "cloudfs_instance" {
   zone                      = ""
   allow_stopping_for_update = true
   boot_disk {
-    source = google_compute_disk.cloudfs_ps_disk[count.index].self_link
+    initialize_params {
+      image = "projects/prod-ms-mgmt/global/images/cloudfs-8100-17321"
+    }
 
   }
   network_interface {
