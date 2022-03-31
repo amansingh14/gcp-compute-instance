@@ -14,7 +14,7 @@ resource "google_compute_disk" "windows_boot_disk" {
   size    = 100
 }
 
-resource "google_compute_disk" "cloudfs-ps-disk" {
+resource "google_compute_disk" "cloudfs_ps_disk" {
   count   = 3
   project = local.project_name
   name    = "cloudfs-ps-disk-${count.index}"
@@ -41,7 +41,7 @@ resource "google_compute_disk" "addition_metadata_disks" {
   zone    = local.zone_id
   size    = 100
 }
-resource "google_compute_instance" "windows-instance" {
+resource "google_compute_instance" "windows_instance" {
   count                     = 3
   project                   = local.project_name
   machine_type              = "n2-standard-4"
@@ -57,7 +57,7 @@ resource "google_compute_instance" "windows-instance" {
   }
 }
 
-resource "google_compute_instance" "cloudfs-instance" {
+resource "google_compute_instance" "cloudfs_instance" {
   count                     = 2
   project                   = local.project_name
   machine_type              = "n2-standard-4"
@@ -65,7 +65,7 @@ resource "google_compute_instance" "cloudfs-instance" {
   zone                      = ""
   allow_stopping_for_update = true
   boot_disk {
-    source = google_compute_disk.cloudfs-ps-disk[count.index].self_link
+    source = google_compute_disk.cloudfs_ps_disk[count.index].self_link
 
   }
   network_interface {
@@ -79,7 +79,7 @@ resource "google_compute_attached_disk" "attach_metadata_disk" {
   project  = local.project_name
   zone     = local.zone_id
   disk     = google_compute_disk.addition_cache_disks[count.index].name
-  instance = google_compute_instance.cloudfs-instance[count.index].name
+  instance = google_compute_instance.cloudfs_instance[count.index].name
 }
 
 resource "google_compute_attached_disk" "attach_cache_disk" {
@@ -87,7 +87,7 @@ resource "google_compute_attached_disk" "attach_cache_disk" {
   project  = local.project_name
   zone     = local.zone_id
   disk     = google_compute_disk.addition_cache_disks[count.index].name
-  instance = google_compute_instance.cloudfs-instance[count.index].name
+  instance = google_compute_instance.cloudfs_instance[count.index].name
 }
 
 resource "google_storage_bucket" "cloudfs_bucket" {
