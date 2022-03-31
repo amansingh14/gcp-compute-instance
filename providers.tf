@@ -9,8 +9,8 @@ terraform {
 }
 # Define GCP provider
 provider "google" {
-  credentials = file("~/Downloads/tryme-335411-607d98fa9382.json")
+  credentials = file("./dev-panzura-edge-d7aae08901f7.json")
   project     = local.project_name
-  region      = "us-central1-a"
-  zone        = "us-central1"
+  region      = "us-central1"
+  zone        = local.zone_id
 }
